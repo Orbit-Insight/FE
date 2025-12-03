@@ -33,7 +33,7 @@ body, html {
 }
 
 .viewport-card {
-  background: #030e34;
+ 
   border-radius: var(--radius);
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
   padding: 16px;
@@ -44,6 +44,9 @@ body, html {
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: #0a0424;
+  border-radius: 5%;
+  overflow:hidden;
 }
 
 
@@ -94,6 +97,10 @@ body, html {
 .p-mars {background: url('assets/mars.png') no-repeat center/cover;  }
 .p-jupiter { background: url('assets/jup.png') no-repeat center/cover; }
 .p-saturn {background: url('assets/sat.png') no-repeat center/cover;  }
+.p-uranus {background: url('assets/uranus.png') no-repeat center/cover;  }
+.p-neptune {background: url('assets/neptune.png') no-repeat center/cover;  }
+.p-pluto {background: url('assets/pluto.png') no-repeat center/cover;  }
+
 
 .orbit-ring {
   position: absolute;
@@ -149,4 +156,10 @@ body, html {
   background-color: #ffffff;
   border-radius: 30px;
   color:#000000;
+}
+
+.subtitle{
+  font-family: 'Pretendard';
+  font-weight: 200;
+  font-size: 16px;
 }
