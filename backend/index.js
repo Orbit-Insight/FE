@@ -178,13 +178,14 @@ app.get('/api/planets/:id', (req, res) => {
 });
 
 // SPA fallback: serve React app for non-API routes
-app.get('/*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(distPath, 'index.html'));
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(distPath, 'index.html'));
 });
 
+// 404 handler (for API only)
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+    res.status(404).json({ error: 'Route not found' });
 });
 
 app.listen(PORT, () => {
