@@ -178,7 +178,7 @@ app.get('/api/planets/:id', (req, res) => {
 });
 
 // SPA fallback: serve React app for non-API routes
-app.get('*', (req, res, next) => {
+app.get('/*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   res.sendFile(path.join(distPath, 'index.html'));
 });
