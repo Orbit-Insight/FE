@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const distPath = path.resolve(__dirname, 'dist');
+const distPath = path.resolve(__dirname, '../dist');
 
 app.use(cors());
 app.use(express.json());
