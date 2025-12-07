@@ -118,13 +118,7 @@ const planets = [
   },
 ];
 
-app.get('/', (_req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'Planet API server',
-    endpoints: ['/health', '/api/planets', '/api/planets/:id'],
-  });
-});
+
 
 app.get('/api', (_req, res) => {
   res.json({
