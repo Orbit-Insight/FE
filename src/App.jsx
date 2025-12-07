@@ -2,17 +2,18 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import { Global, css } from "@emotion/react";
 import styled from "@emotion/styled";
+import LogoImg from "./assets/Logo.svg";
 
-const planetData = [
-  { name: "수성", colorClass: "p-mercury", radius: "2,439 km", mass: "3.3e23 kg", distance: 60, period: 4.15 },
-  { name: "금성", colorClass: "p-venus", radius: "6,052 km", mass: "4.87e24 kg", distance: 90, period: 10.3 },
-  { name: "지구", colorClass: "p-earth", radius: "6,371 km", mass: "5.97e24 kg", distance: 130, period: 16.0 },
-  { name: "화성", colorClass: "p-mars", radius: "3,390 km", mass: "6.42e23 kg", distance: 170, period: 30.0 },
-  { name: "목성", colorClass: "p-jupiter", radius: "69,911 km", mass: "1.90e27 kg", distance: 230, period: 120.0 },
-  { name: "토성", colorClass: "p-saturn", radius: "58,232 km", mass: "5.68e26 kg", distance: 290, period: 250.0 },
-  { name: "천왕성", colorClass: "p-uranus", radius: "25,362 km", mass: "8.68e25 kg", distance: 340, period: 370.0 },
-  { name: "해왕성", colorClass: "p-neptune", radius: "24,622 km", mass: "1.02e26 kg", distance: 380, period: 480.0 },
-  { name: "명왕성", colorClass: "p-pluto", radius: "1,188 km", mass: "1.31e22 kg", distance: 410, period: 600.0 },
+const defaultPlanets = [
+  { id: "mercury", name: "수성", colorClass: "p-mercury", radius: "2,439 km", mass: "3.3e23 kg", distance: 60, period: 4.15 },
+  { id: "venus", name: "금성", colorClass: "p-venus", radius: "6,052 km", mass: "4.87e24 kg", distance: 90, period: 10.3 },
+  { id: "earth", name: "지구", colorClass: "p-earth", radius: "6,371 km", mass: "5.97e24 kg", distance: 130, period: 16.0 },
+  { id: "mars", name: "화성", colorClass: "p-mars", radius: "3,390 km", mass: "6.42e23 kg", distance: 170, period: 30.0 },
+  { id: "jupiter", name: "목성", colorClass: "p-jupiter", radius: "69,911 km", mass: "1.90e27 kg", distance: 230, period: 120.0 },
+  { id: "saturn", name: "토성", colorClass: "p-saturn", radius: "58,232 km", mass: "5.68e26 kg", distance: 290, period: 250.0 },
+  { id: "uranus", name: "천왕성", colorClass: "p-uranus", radius: "25,362 km", mass: "8.68e25 kg", distance: 340, period: 370.0 },
+  { id: "neptune", name: "해왕성", colorClass: "p-neptune", radius: "24,622 km", mass: "1.02e26 kg", distance: 380, period: 480.0 },
+  { id: "pluto", name: "명왕성", colorClass: "p-pluto", radius: "1,188 km", mass: "1.31e22 kg", distance: 410, period: 600.0 },
 ];
 
 const Header = styled.div`
@@ -312,14 +313,119 @@ const ButtonContainer = styled.div`
   margin-bottom: 12px;
 `;
 
+const AuthForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+`;
+
+const AuthActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+`;
+
+const Input = styled.input`
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    border-color: #667eea;
+  }
+`;
+
+const ErrorText = styled.div`
+  color: #d9534f;
+  font-size: 13px;
+`;
+
+const SmallText = styled.div`
+  font-size: 13px;
+  color: #666;
+  margin-top: 4px;
+`;
+
+const AuthToggle = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 10px 0 14px;
+`;
+
+const AuthTabButton = styled.button`
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid ${({ active }) => (active ? '#667eea' : '#ddd')};
+  background: ${({ active }) => (active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#fff')};
+  color: ${({ active }) => (active ? '#fff' : '#333')};
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+`;
+
 function App() {
+  const apiBaseEnv = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+  const normalizedBase = apiBaseEnv.endsWith("/") ? apiBaseEnv.slice(0, -1) : apiBaseEnv;
+  const apiRoot = normalizedBase.endsWith("/api") ? normalizedBase : `${normalizedBase}/api`;
   const [view, setView] = useState("home");
+  const [planets, setPlanets] = useState(defaultPlanets);
   const [selectedPlanets, setSelectedPlanets] = useState([]);
   const [speed, setSpeed] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [authUser, setAuthUser] = useState(null);
+  const [authToken, setAuthToken] = useState(null);
+  const [showLoginForm, setShowLoginForm] = useState(true);
+  const [authMode, setAuthMode] = useState("login"); // login | signup
+  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
+  const [loginError, setLoginError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [signupForm, setSignupForm] = useState({ username: "", password: "", name: "" });
+  const [signupError, setSignupError] = useState("");
+
+  useEffect(() => {
+    const fetchPlanets = async () => {
+      if (!apiRoot) return;
+      try {
+        const res = await fetch(`${apiRoot}/planets`);
+        if (!res.ok) throw new Error(`Failed to fetch planets: ${res.status}`);
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setPlanets(data);
+        }
+      } catch (err) {
+        console.error("행성 데이터를 불러오지 못했습니다.", err);
+      }
+    };
+
+    fetchPlanets();
+  }, [apiRoot]);
+
+  useEffect(() => {
+    const savedAuth = localStorage.getItem("planet-auth");
+    if (savedAuth) {
+      try {
+        const parsed = JSON.parse(savedAuth);
+        if (parsed?.token && parsed?.user) {
+          setAuthToken(parsed.token);
+          setAuthUser(parsed.user);
+          setIsLoggedIn(true);
+          setShowLoginForm(false);
+        }
+      } catch (e) {
+        console.error("Failed to parse saved auth", e);
+      }
+    }
+  }, []);
 
   const formatDateTime = (date) => {
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -342,8 +448,81 @@ function App() {
     });
   };
 
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setLoginError("");
+    setSignupError("");
+    setAuthLoading(true);
+    try {
+      const res = await fetch(`${apiRoot}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loginForm),
+      });
+      if (!res.ok) {
+        throw new Error(`Login failed: ${res.status}`);
+      }
+      const data = await res.json();
+      setAuthUser(data.user);
+      setAuthToken(data.token);
+      setIsLoggedIn(true);
+      setShowLoginForm(false);
+      localStorage.setItem("planet-auth", JSON.stringify({ token: data.token, user: data.user }));
+      setLoginForm({ username: "", password: "" });
+    } catch (err) {
+      console.error(err);
+      setLoginError("아이디/비밀번호를 확인해주세요.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSignupSubmit = async (e) => {
+    e.preventDefault();
+    setSignupError("");
+    setLoginError("");
+    setAuthLoading(true);
+    try {
+      const res = await fetch(`${apiRoot}/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(signupForm),
+      });
+      if (!res.ok) {
+        if (res.status === 409) throw new Error("already exists");
+        throw new Error(`Signup failed: ${res.status}`);
+      }
+      const data = await res.json();
+      setAuthUser(data.user);
+      setAuthToken(data.token);
+      setIsLoggedIn(true);
+      setShowLoginForm(false);
+      setAuthMode("login");
+      localStorage.setItem("planet-auth", JSON.stringify({ token: data.token, user: data.user }));
+      setSignupForm({ username: "", password: "", name: "" });
+    } catch (err) {
+      console.error(err);
+      if (err.message.includes("already exists")) {
+        setSignupError("이미 존재하는 아이디입니다.");
+      } else {
+        setSignupError("가입에 실패했습니다. 다시 시도해주세요.");
+      }
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setAuthUser(null);
+    setAuthToken(null);
+    setIsLoggedIn(false);
+    setShowHistory(false);
+    setShowLoginForm(true);
+    localStorage.removeItem("planet-auth");
+  };
+
   const handlePlanetClick = (planetName) => {
-    const planet = planetData.find((p) => p.name === planetName);
+    const planet = planets.find((p) => p.name === planetName);
     if (!planet) return;
 
     pushHistory(planetName);
@@ -389,7 +568,7 @@ function App() {
 
       <div className="sun"></div>
 
-      {planetData.map((p) => {
+      {planets.map((p) => {
         const isSelected = selectedPlanets.some((sp) => sp.name === p.name);
         return (
           <div
@@ -429,6 +608,7 @@ function App() {
               <HeaderLeft>
                 
                 <div>
+                  <img src={LogoImg}></img>
                   <Title> 행성비교 ☀️ </Title>
                   
                   <p className="subtitle">공전 시각화 · 행성 조회 · 비교</p>
@@ -436,9 +616,23 @@ function App() {
                 </div>
               </HeaderLeft>
               
-              <LoginButton onClick={handleLogin}>
-                {isLoggedIn ? "로그아웃" : "로그인"}
-              </LoginButton>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                {isLoggedIn && authUser && (
+                  <div style={{ textAlign: "right", fontSize: "13px" }}>
+                    <div>{authUser.name}</div>
+                    <div style={{ color: "#666" }}>{authUser.username}</div>
+                  </div>
+                )}
+                <LoginButton onClick={() => {
+                  if (isLoggedIn) {
+                    handleLogout();
+                  } else {
+                    setShowLoginForm(true);
+                  }
+                }}>
+                  {isLoggedIn ? "로그아웃" : "로그인/가입"}
+                </LoginButton>
+              </div>
             </HeaderContainer>
           </div>
         </Header>
@@ -453,6 +647,88 @@ function App() {
           </section>
 
           <Panel>
+            {!isLoggedIn && showLoginForm && (
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontWeight: 700 }}>로그인 / 회원가입</div>
+                <AuthToggle>
+                  <AuthTabButton
+                    type="button"
+                    active={authMode === "login"}
+                    onClick={() => { setAuthMode("login"); setLoginError(""); setSignupError(""); }}
+                  >
+                    로그인
+                  </AuthTabButton>
+                  <AuthTabButton
+                    type="button"
+                    active={authMode === "signup"}
+                    onClick={() => { setAuthMode("signup"); setLoginError(""); setSignupError(""); }}
+                  >
+                    회원가입
+                  </AuthTabButton>
+                </AuthToggle>
+
+                {authMode === "login" && (
+                  <AuthForm onSubmit={handleLoginSubmit}>
+                    <Input
+                      type="text"
+                      placeholder="아이디 (astro)"
+                      value={loginForm.username}
+                      onChange={(e) => setLoginForm((prev) => ({ ...prev, username: e.target.value }))}
+                    />
+                    <Input
+                      type="password"
+                      placeholder="비밀번호 (planet123)"
+                      value={loginForm.password}
+                      onChange={(e) => setLoginForm((prev) => ({ ...prev, password: e.target.value }))}
+                    />
+                    {loginError && <ErrorText>{loginError}</ErrorText>}
+                    <AuthActions>
+                      <LoginButton type="submit" disabled={authLoading}>
+                        {authLoading ? "진행 중..." : "로그인"}
+                      </LoginButton>
+                    </AuthActions>
+                    <SmallText>데모 계정: astro / planet123</SmallText>
+                  </AuthForm>
+                )}
+
+                {authMode === "signup" && (
+                  <AuthForm onSubmit={handleSignupSubmit}>
+                    <Input
+                      type="text"
+                      placeholder="아이디"
+                      value={signupForm.username}
+                      onChange={(e) => setSignupForm((prev) => ({ ...prev, username: e.target.value }))}
+                    />
+                    <Input
+                      type="password"
+                      placeholder="비밀번호"
+                      value={signupForm.password}
+                      onChange={(e) => setSignupForm((prev) => ({ ...prev, password: e.target.value }))}
+                    />
+                    <Input
+                      type="text"
+                      placeholder="이름/닉네임"
+                      value={signupForm.name}
+                      onChange={(e) => setSignupForm((prev) => ({ ...prev, name: e.target.value }))}
+                    />
+                    {signupError && <ErrorText>{signupError}</ErrorText>}
+                    <AuthActions>
+                      <LoginButton type="submit" disabled={authLoading}>
+                        {authLoading ? "진행 중..." : "가입하기"}
+                      </LoginButton>
+                    </AuthActions>
+                  </AuthForm>
+                )}
+              </div>
+            )}
+
+            {isLoggedIn && authUser && (
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontWeight: 700 }}>안녕하세요, {authUser.name}님</div>
+                <SmallText>조회 히스토리가 저장됩니다.</SmallText>
+              </div>
+            )}
+
             <ButtonContainer>
               <HistoryButton
                 onClick={() => setShowHistory(!showHistory)}
